@@ -78,6 +78,8 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeVM)
+
+            implementation("com.google.code.gson:gson:2.13.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

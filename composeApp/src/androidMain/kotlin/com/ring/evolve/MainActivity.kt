@@ -63,21 +63,21 @@ class MainActivity : ComponentActivity() {
 
         YCBTClient.initClient(applicationContext,true, true)
 
-        YCBTClient.startScanBle(object : BleScanResponse {
-            @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-            override fun onScanResponse(i: Int, scanDeviceBean: ScanDeviceBean?) {
-                if (scanDeviceBean != null) {
-                    Log.d("BEEEE", scanDeviceBean?.device?.name ?: "")
-                    Log.d("BEEEE", "Device Mac" + scanDeviceBean.deviceMac)
-                    YCBTClient.connectBle(scanDeviceBean.deviceMac, object : BleConnectResponse {
-                        override fun onConnectResponse(p0: Int) {
-                            Log.d("BEEEE", p0.toString())
-                            Constants.BLEState.Disconnect
-                        }
-                    });
-                }
-            }
-        }, 1000)
+//        YCBTClient.startScanBle(object : BleScanResponse {
+//            @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+//            override fun onScanResponse(i: Int, scanDeviceBean: ScanDeviceBean?) {
+//                if (scanDeviceBean != null) {
+//                    Log.d("BEEEE", scanDeviceBean?.device?.name ?: "")
+//                    Log.d("BEEEE", "Device Mac" + scanDeviceBean.deviceMac)
+//                    YCBTClient.connectBle(scanDeviceBean.deviceMac, object : BleConnectResponse {
+//                        override fun onConnectResponse(p0: Int) {
+//                            Log.d("BEEEE", p0.toString())
+//                            Constants.BLEState.Disconnect
+//                        }
+//                    });
+//                }
+//            }
+//        }, 1000)
         setContent {
             App()
         }

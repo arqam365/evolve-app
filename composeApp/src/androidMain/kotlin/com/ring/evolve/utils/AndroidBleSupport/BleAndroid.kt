@@ -8,6 +8,9 @@ import com.yucheng.ycbtsdk.YCBTClient
 import com.yucheng.ycbtsdk.bean.ScanDeviceBean
 import com.yucheng.ycbtsdk.response.BleConnectResponse
 import com.yucheng.ycbtsdk.response.BleScanResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 
 class BleAndroid: BleSupportInterface {
     override fun startScan(addDevice: (ScanDevice) -> Unit) {
@@ -37,6 +40,7 @@ class BleAndroid: BleSupportInterface {
     override fun connect(mac: String, statusCodeChange: (Int) -> Unit) {
         YCBTClient.connectBle(mac,object : BleConnectResponse{
             override fun onConnectResponse(p0: Int) {
+                Log.d("connectResponse", p0.toString())
                 statusCodeChange(p0)
             }
         })
@@ -44,6 +48,22 @@ class BleAndroid: BleSupportInterface {
 
     override fun disconnect(mac: String) {
         YCBTClient.disconnectBle()
+    }
+
+    override fun connectionStatus(): Flow<String> = callbackFlow {
+        val callback = object : BleConnectResponse {
+            override fun onConnectResponse(code: Int) {
+                when (code) {
+                    Constants.BLEState.Disconnect -> trySend("Disconnect")
+                    Constants.BLEState.ReadWriteOK -> trySend("Connected")
+                    Constants.BLEState.TimeOut -> trySend("Timeout")
+                    Constants.BLEState.Disconnecting -> trySend("Disconnecting")
+                    else -> trySend("Unknown")
+                }
+            }
+        }
+
+        YCBTClient.registerBleStateChange(callback)
     }
 
 

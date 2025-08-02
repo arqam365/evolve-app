@@ -3,6 +3,7 @@ package com.ring.evolve.viewmodel
 import androidx.lifecycle.ViewModel
 import com.ring.evolve.bluetooth.BluetoothManager
 import com.ring.evolve.data.ScannedDevice
+//import com.ring.evolve.sdk.YuChengSdkManager
 import com.ring.evolve.utils.storage.SharedPreferenceStorageTypes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,3 +50,24 @@ class BleViewModel(
         _connected.value = last
     }
 }
+
+//class BleViewModel(
+//    private val sdk: YuChengSdkManager
+//) : ViewModel() {
+//
+//    fun scanDevices() {
+//        sdk.startScan { name, mac ->
+//            println("Found: $name ($mac)")
+//        }
+//    }
+//
+//    fun connectDevice(mac: String) {
+//        sdk.connect(mac) { success ->
+//            println("Connection success = $success")
+//        }
+//    }
+//
+//    fun disconnect() {
+//        sdk.disconnect()
+//    }
+//}

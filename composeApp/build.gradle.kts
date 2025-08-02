@@ -89,6 +89,10 @@ android {
     namespace = "org.ring.evolve"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    sourceSets["main"].java.srcDirs("src/androidMain/kotlin")
+    sourceSets["main"].jniLibs.srcDir("libs")
+    sourceSets["main"].resources.srcDir("libs")
+
     defaultConfig {
         applicationId = "org.ring.evolve"
         minSdk = libs.versions.android.minSdk.get().toInt()

@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,12 +48,52 @@ fun BleSearch(){
                 Text(connectionStatus.value)
             }
 
+            Button(onClick = {
+                bleSupport.disconnect()
+            }) {
+                Text("Disconnect")
+            }
+
             devices.forEach { it->
                 Row(modifier = Modifier.padding(8.dp)
                     .clickable(onClick = {bleSupport.connect(it.mac){status->
                     } })){
                     Text(text=it.name)
                     Text(text=it.mac)
+                }
+            }
+
+            var showHand by remember { mutableStateOf(false) }
+
+            Button(onClick = { bleSupport.startHeartRateMonitoring() })
+            {
+                Text("Start ECG")
+            }
+
+            Row{
+                Button(onClick = { showHand = !showHand })
+                {
+                    Text("Start ECG")
+                }
+                Spacer(modifier=Modifier.width(40.dp))
+                Button(onClick = {bleSupport.stopEcg()})
+                {
+                    Text("Stop ECG")
+                }
+            }
+            if (showHand)
+            {
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Button(onClick = {
+                        bleSupport.startEcg(0)
+                    }){
+                        Text("Left Hand")
+                    }
+                    Button(onClick = {
+                        bleSupport.startEcg(1)
+                    }){
+                        Text("Right Hand")
+                    }
                 }
             }
         }

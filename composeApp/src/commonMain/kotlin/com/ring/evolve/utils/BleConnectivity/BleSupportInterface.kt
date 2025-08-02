@@ -5,9 +5,16 @@ import kotlinx.coroutines.flow.Flow
 interface BleSupportInterface {
     fun startScan(addDevice: (device: ScanDevice) -> Unit)
     fun connect(mac: String, statusCodeChange: (statusCode: Int) -> Unit)
-    fun disconnect(mac: String)
+    fun disconnect()
 
     fun connectionStatus(): Flow<String>
+
+    fun startEcg(hand:Int)
+
+    fun stopEcg()
+
+    fun startHeartRateMonitoring()
+
 }
 
 data class ScanDevice(

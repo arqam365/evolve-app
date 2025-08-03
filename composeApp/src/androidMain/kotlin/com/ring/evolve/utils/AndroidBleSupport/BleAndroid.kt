@@ -1,6 +1,7 @@
 package com.ring.evolve.utils.AndroidBleSupport
 
 import android.util.Log
+import com.google.gson.Gson
 import com.ring.evolve.utils.BleConnectivity.BleSupportInterface
 import com.ring.evolve.utils.BleConnectivity.ScanDevice
 import com.yucheng.ycbtsdk.Constants
@@ -8,12 +9,13 @@ import com.yucheng.ycbtsdk.YCBTClient
 import com.yucheng.ycbtsdk.bean.ScanDeviceBean
 import com.yucheng.ycbtsdk.response.BleConnectResponse
 import com.yucheng.ycbtsdk.response.BleDataResponse
+import com.yucheng.ycbtsdk.response.BleDeviceToAppDataResponse
 import com.yucheng.ycbtsdk.response.BleRealDataResponse
 import com.yucheng.ycbtsdk.response.BleScanResponse
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flow
+
 
 class BleAndroid: BleSupportInterface {
     override fun startScan(addDevice: (ScanDevice) -> Unit) {
@@ -192,12 +194,129 @@ class BleAndroid: BleSupportInterface {
     }
 
     override fun startHeartRateMonitoring() {
+
         Log.d("Heart Rate", "Starting Capture")
-        YCBTClient.settingHeartMonitor(0x01,60, object : BleDataResponse {
+        YCBTClient.settingHeartMonitor(0x00,30, object : BleDataResponse {
             override fun onDataResponse(p0: Int, p1: Float, p2: java.util.HashMap<*, *>?) {
                 Log.d("Heart Rate", p2.toString())
             }
         })
     }
+
+    override fun registerRealTimeData() {
+        YCBTClient.appRegisterRealDataCallBack(object : BleRealDataResponse {
+            override fun onRealDataResponse(p0: Int, p1: java.util.HashMap<*, *>?) {
+                Log.d("Real Time Data", "${p0}, ${p1}")
+            }
+
+        })
+        //Enable Access
+        YCBTClient.appRealDataFromDevice(0x01, 0x00, object : BleDataResponse {
+            override fun onDataResponse(
+                p0: Int,
+                p1: Float,
+                p2: java.util.HashMap<*, *>?,
+            ) {
+                Log.d("Real Data Enabled", "${p0}, ${p1}, ${p2}")
+
+            }
+
+        })
+
+    }
+
+    override fun getHealthData() {
+        YCBTClient.healthHistoryData(Constants.DATATYPE.Health_HistoryHeart, object : BleDataResponse{
+            override fun onDataResponse(
+                p0: Int,
+                p1: Float,
+                p2: java.util.HashMap<*, *>?,
+            ) {
+                    Log.d("Health Data", "Code: $p0, Value: $p1, Data: $p2 Health Data: ${Gson().toJson(p2)}")
+            }
+
+        })
+    }
+
+    override fun startHeartRateMeasurement() {
+
+        YCBTClient.appRegisterRealDataCallBack(object : BleRealDataResponse {
+            override fun onRealDataResponse(dataType: Int, dataMap: HashMap<*, *>?) {
+                if (dataType == Constants.DATATYPE.Real_UploadHeart) {
+                    val heartRate = dataMap?.get("heartValue") as? Int
+                    Log.d("HeartRate", "Measured heart rate: $heartRate bpm")
+                }
+            }
+        })
+
+        YCBTClient.appStartMeasurement(
+            1,
+            0x00,
+            object : BleDataResponse {
+                override fun onDataResponse(code: Int, value: Float, map: HashMap<*, *>?) {
+                    if (code == 0) {
+                        Log.d("HeartRate", "Heart rate measurement started successfully.")
+                    } else {
+                        Log.e("HeartRate", "Failed to start measurement. Code: $code")
+                    }
+                }
+            }
+        )
+
+        YCBTClient.deviceToApp(object : BleDeviceToAppDataResponse {
+            override fun onDataResponse(i: Int, dataMap: HashMap<*, *>?) {
+                if (i == 0 && dataMap != null && dataMap["dataType"] == Constants.DATATYPE.DeviceMeasurementResult) {
+                    val resultData = dataMap["datas"] as? ByteArray
+                    when (resultData?.get(1)?.toInt()) {
+                        0 -> Log.d("HeartRate", "User exited measurement.")
+                        1 -> Log.d("HeartRate", "Heart rate measurement completed.")
+                        2 -> Log.e("HeartRate", "Heart rate measurement failed.")
+                    }
+                }
+            }
+        })
+    }
+
+    override fun startBloodPressure() {
+
+        YCBTClient.appRegisterRealDataCallBack(object : BleRealDataResponse {
+            override fun onRealDataResponse(dataType: Int, dataMap: HashMap<*, *>?) {
+                if (dataType == Constants.DATATYPE.Real_UploadBlood) {
+                    val SBP = dataMap?.get("bloodSBP").toString()
+                    val DBP = dataMap?.get("bloodDBP").toString()
+                    Log.d("SystolicBP", "Blood Pressure Systolic: $SBP")
+                    Log.d("SystolicBP", "Blood Pressure Diastolic: $DBP")
+                }
+            }
+        })
+
+        YCBTClient.appStartMeasurement(
+            1,
+            0x01,
+            object : BleDataResponse {
+                override fun onDataResponse(code: Int, value: Float, map: HashMap<*, *>?) {
+                    if (code == 0) {
+                        Log.d("Blood Pressure", "Blood Pressure measurement started successfully.")
+                    } else {
+                        Log.e("Blood Pressure", "Failed to start measurement. Code: $code")
+                    }
+                }
+            }
+        )
+
+        YCBTClient.deviceToApp(object : BleDeviceToAppDataResponse {
+            override fun onDataResponse(i: Int, dataMap: HashMap<*, *>?) {
+                if (i == 0 && dataMap != null && dataMap["dataType"] == Constants.DATATYPE.DeviceMeasurementResult) {
+                    val resultData = dataMap["datas"] as? ByteArray
+                    when (resultData?.get(1)?.toInt()) {
+                        0 -> Log.d("Blood Pressure", "User exited measurement.")
+                        1 -> Log.d("Blood Pressure", "Blood Pressure measurement completed.")
+                        2 -> Log.e("Blood Pressure", "Blood Pressure measurement failed.")
+                    }
+                }
+            }
+        })
+    }
+
 
 }

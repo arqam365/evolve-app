@@ -15,6 +15,11 @@ interface BleSupportInterface {
 
     fun startHeartRateMonitoring()
 
+    fun registerRealTimeData()
+
+    fun getHealthData()
+    fun startHeartRateMeasurement()
+    fun startBloodPressure()
 }
 
 data class ScanDevice(

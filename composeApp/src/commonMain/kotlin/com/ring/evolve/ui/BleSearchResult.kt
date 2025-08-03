@@ -65,11 +65,26 @@ fun BleSearch(){
 
             var showHand by remember { mutableStateOf(false) }
 
-            Button(onClick = { bleSupport.startHeartRateMonitoring() })
-            {
-                Text("Start ECG")
+            Row{
+                Button(onClick = {
+//                    bleSupport.startHeartRateMonitoring()
+                    bleSupport.registerRealTimeData() })
+                {
+                    Text("Start Heart Rate Monitoring")
+                }
+                Spacer(modifier=Modifier.width(40.dp))
+
             }
 
+
+            Button(onClick = { bleSupport.startHeartRateMeasurement()})
+            {
+                Text("Get Heart Data")
+            }
+            Button(onClick = { bleSupport.startBloodPressure()})
+            {
+                Text("Blood Pressure")
+            }
             Row{
                 Button(onClick = { showHand = !showHand })
                 {

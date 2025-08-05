@@ -32,6 +32,14 @@ fun BleSearch(){
 
     var connectionStatus = bleSupport.connectionStatus().collectAsState("")
 
+    var steps by remember { mutableStateOf("") }
+    var distances by remember { mutableStateOf("") }
+    var calories by remember { mutableStateOf("") }
+
+    var continuousTemperature by remember { mutableStateOf("") }
+    var bloodGlucose by remember { mutableStateOf("") }
+    var uricAcid by remember { mutableStateOf("") }
+
 
 
     Box(modifier=Modifier.fillMaxSize().padding(20.dp)){
@@ -67,12 +75,18 @@ fun BleSearch(){
 
             Row{
                 Button(onClick = {
-//                    bleSupport.startHeartRateMonitoring()
-                    bleSupport.registerRealTimeData() })
+                    bleSupport.startHeartRateMonitoring()
+                })
                 {
                     Text("Start Heart Rate Monitoring")
                 }
                 Spacer(modifier=Modifier.width(40.dp))
+                Button(onClick = {
+                    bleSupport.getHealthData()
+                })
+                {
+                    Text("Get")
+                }
 
             }
 
@@ -85,6 +99,63 @@ fun BleSearch(){
             {
                 Text("Blood Pressure")
             }
+            Button(onClick = { bleSupport.getBloodOxygen()})
+            {
+                Text("Blood SpO2")
+            }
+            Button(onClick = { bleSupport.getTemperature()})
+            {
+                Text("Temperature")
+            }
+            Row{
+                Button(onClick = { bleSupport.getContinuousTemperature(){
+                    continuousTemperature=it
+                } })
+                {
+                    Text("Continuous Temperature")
+                }
+                Spacer(modifier=Modifier.width(40.dp))
+                Text(continuousTemperature)
+            }
+            Button(onClick = { bleSupport.enableRealData(){step,distance,calorie->
+                steps = step
+                distances = distance
+                calories = calorie
+            } })
+            {
+                Text("Real Time Data")
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)){
+                Text("Steps: $steps")
+                Text("Distance: $distances")
+                Text("Calories: $calories")
+            }
+
+            Row{
+                Button(onClick = {
+                    bleSupport.getBloodGlucose {
+                        bloodGlucose=it
+                    }
+                })
+                {
+                    Text("Blood Glucose")
+                }
+                Spacer(modifier=Modifier.width(40.dp))
+                Text(bloodGlucose)
+            }
+            Row{
+                Button(onClick = {
+                    bleSupport.getUricAcid {
+                        uricAcid=it
+                    }
+                })
+                {
+                    Text("Uric Acid")
+                }
+                Spacer(modifier=Modifier.width(40.dp))
+                Text(uricAcid)
+            }
+
             Row{
                 Button(onClick = { showHand = !showHand })
                 {

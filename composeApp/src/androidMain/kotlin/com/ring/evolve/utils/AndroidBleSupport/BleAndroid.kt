@@ -12,18 +12,14 @@ import com.yucheng.ycbtsdk.response.BleDataResponse
 import com.yucheng.ycbtsdk.response.BleDeviceToAppDataResponse
 import com.yucheng.ycbtsdk.response.BleRealDataResponse
 import com.yucheng.ycbtsdk.response.BleScanResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class BleAndroid: BleSupportInterface
 {
+
 
     override fun startScan(addDevice: (ScanDevice) -> Unit) {
         YCBTClient.disconnectBle()
@@ -82,7 +78,7 @@ class BleAndroid: BleSupportInterface
         }
     }
 
-    override fun startEcg(hand: Int) {
+    override fun startEcg(hand: Int, updateChunk:(List<Int>)-> Unit) {
         val hand= if (hand==0) Constants.HandWear.Left else Constants.HandWear.Right
         YCBTClient.settingHandWear(hand, object: BleDataResponse{
             override fun onDataResponse(
@@ -110,6 +106,7 @@ class BleAndroid: BleSupportInterface
                     when (p0) {
                         Constants.DATATYPE.Real_UploadECG -> {
                             val data = hashMap["data"] as? List<Int> ?: return
+                            updateChunk(data)
                             Log.d("ECG_DATA", "ECG Data: $data")
                         }
 
@@ -154,6 +151,7 @@ class BleAndroid: BleSupportInterface
                     when (p0) {
                         Constants.DATATYPE.Real_UploadECG -> {
                             val data = hashMap["data"] as? List<Int> ?: return
+                            updateChunk(data)
                             Log.d("ECG_DATA", "ECG Data: $data")
                         }
 
@@ -200,16 +198,6 @@ class BleAndroid: BleSupportInterface
 
     override fun startHeartRateMonitoring() {
 
-        YCBTClient.settingDataCollect(0x01,0x03,90,60,object : BleDataResponse{
-            override fun onDataResponse(
-                p0: Int,
-                p1: Float,
-                p2: java.util.HashMap<*, *>?,
-            ) {
-                Log.d ("Config Set","$p0, $p1, $p2")
-            }
-
-        })
 
         YCBTClient.appRegisterRealDataCallBack(object : BleRealDataResponse {
             override fun onRealDataResponse(p0: Int, p1: java.util.HashMap<*, *>?) {
@@ -219,7 +207,7 @@ class BleAndroid: BleSupportInterface
         })
 
         Log.d("Heart Rate", "Starting Capture")
-        YCBTClient.settingHeartMonitor(0x01,60, object : BleDataResponse {
+        YCBTClient.settingHeartMonitor(0x01,30, object : BleDataResponse {
             override fun onDataResponse(p0: Int, p1: Float, p2: java.util.HashMap<*, *>?) {
                 Log.d("Heart Rate", p0.toString())
             }
@@ -251,6 +239,17 @@ class BleAndroid: BleSupportInterface
     }
 
     override fun startHeartRateMeasurement() {
+
+        YCBTClient.settingTime(object : BleDataResponse{
+            override fun onDataResponse(
+                p0: Int,
+                p1: Float,
+                p2: java.util.HashMap<*, *>?,
+            ) {
+                Log.d("Time Set", "Code: $p0, Value: $p1, Data: $p2")
+            }
+
+        })
 
         YCBTClient.appRegisterRealDataCallBack(object : BleRealDataResponse {
             override fun onRealDataResponse(dataType: Int, dataMap: HashMap<*, *>?) {
@@ -474,6 +473,19 @@ class BleAndroid: BleSupportInterface
             }
         })
     }
+
+    override fun startTemperatureMonitoring() {
+        YCBTClient.settingTemperatureMonitor(true,1,object : BleDataResponse{
+            override fun onDataResponse(
+                p0: Int,
+                p1: Float,
+                p2: java.util.HashMap<*, *>?,
+            ) {
+                Log.d("Temperature", "Code: $p0, Value: $p1, Data: $p2")
+            }
+        })
+    }
+
     override fun getUricAcid(onDataUpdate:(String)-> Unit) {
 
         val isSupported= YCBTClient.isSupportFunction(Constants.FunctionConstant.ISHASURICACIDMEASUREMENT)
@@ -488,12 +500,25 @@ class BleAndroid: BleSupportInterface
 
     override fun getContinuousTemperature(updateData: (String) -> Unit) {
 
+//        YCBTClient.deleteHealthHistoryData(Constants.DATATYPE.Health_DeleteBlood,object: BleDataResponse{
+//            override fun onDataResponse(
+//                p0: Int,
+//                p1: Float,
+//                p2: java.util.HashMap<*, *>?,
+//            ) {
+//                Log.d("Delete Health Data", "Code: $p0, Value: $p1, Data: $p2")
+//            }
+//
+//        })
+
         val dataTypes = listOf(
+            Constants.DATATYPE.Health_HistoryAll,
+            Constants.DATATYPE.Health_HistoryHeart,
             Constants.DATATYPE.Health_HistorySport,
             Constants.DATATYPE.Health_HistorySleep,
-            Constants.DATATYPE.Health_HistoryHeart,
             Constants.DATATYPE.Health_HistoryBlood,
-            Constants.DATATYPE.Health_HistoryAll,
+            Constants.DATATYPE.Health_HistoryBloodOxygen,
+            Constants.DATATYPE.Health_HistoryTemp,
             Constants.DATATYPE.Health_HistoryComprehensiveMeasureData
         )
 
@@ -510,31 +535,5 @@ class BleAndroid: BleSupportInterface
                 }
             })
         }
-
-
     }
-    fun tempDataLoop() {
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
-                delay(3000) // Adjust interval as needed
-                withContext(Dispatchers.Main) {
-                    YCBTClient.getRealTemp(object : BleDataResponse {
-                        override fun onDataResponse(
-                            p0: Int,
-                            p1: Float,
-                            p2: java.util.HashMap<*, *>?,
-                        ) {
-                            if (p0 == 0) {
-                                Log.d("Temp Loop", "Temp data: $p2")
-                            } else {
-                                Log.w("Temp Loop", "Error code: $p0")
-                            }
-                        }
-                    })
-                }
-            }
-        }
-    }
-
-
 }

@@ -62,6 +62,16 @@ class MainActivity : ComponentActivity() {
         checkAndRequestBluetoothPermissions()
 
         YCBTClient.initClient(applicationContext,true, true)
+        YCBTClient.settingTime(object : BleDataResponse{
+            override fun onDataResponse(
+                p0: Int,
+                p1: Float,
+                p2: HashMap<*, *>?,
+            ) {
+                Log.d("Time Set", "Code: $p0, Value: $p1, Data: $p2")
+            }
+
+        })
 
 //        YCBTClient.startScanBle(object : BleScanResponse {
 //            @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
